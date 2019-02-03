@@ -26,48 +26,48 @@ void EnableHighlight(bool bEnable); // Enables of disables the highlight of the 
 
 
 void pluginInit(HANDLE)
-{	
-	g_FilterMgr.LoadConfigFile();		
+{
+	g_FilterMgr.LoadConfigFile();
 }
 
 void pluginCleanUp()
-{	
+{
 }
 
 void GetMainHandler()
-{	
+{
 	if (g_curScintilla == NULL)
 	{
 		int which = -1;
 		::SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
 		if (which == -1)
 			return;
-		g_curScintilla = (which == 0)?nppData._scintillaMainHandle:nppData._scintillaSecondHandle;
-	}	
+		g_curScintilla = (which == 0) ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
+	}
 }
 
 void commandMenuInit()
-{   
-	setCommand(0, TEXT("Toggle Highlight"),    OnToggleHighlight, NULL, false);
-    setCommand(1, TEXT("Highlight Filter..."), ShowConfigDlg,  NULL, false);
+{
+	setCommand(0, TEXT("Toggle Highlight"), OnToggleHighlight, NULL, false);
+	setCommand(1, TEXT("Highlight Filter..."), ShowConfigDlg, NULL, false);
 	GetMainHandler();
 }
 
 void commandMenuCleanUp()
-{		
+{
 }
 
-bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey *sk, bool check0nInit) 
+bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey *sk, bool check0nInit)
 {
-    if (index >= nbFunc)
-        return false;
-    if (!pFunc)
-        return false;
-    lstrcpy(funcItem[index]._itemName, cmdName);
-    funcItem[index]._pFunc = pFunc;
-    funcItem[index]._init2Check = check0nInit;
-    funcItem[index]._pShKey = sk;
-    return true;
+	if (index >= nbFunc)
+		return false;
+	if (!pFunc)
+		return false;
+	lstrcpy(funcItem[index]._itemName, cmdName);
+	funcItem[index]._pFunc = pFunc;
+	funcItem[index]._init2Check = check0nInit;
+	funcItem[index]._pShKey = sk;
+	return true;
 }
 
 void GetCurrentDocumentFullPath(wchar_t *file)
@@ -76,11 +76,11 @@ void GetCurrentDocumentFullPath(wchar_t *file)
 }
 
 void OnToggleHighlight()
-{	
+{
 	wchar_t file[MAX_PATH];
 	GetCurrentDocumentFullPath(file);
 	// Toggle the status of the document (highlighted or not)
-	bool bEnable = g_FilterMgr.UpdateDocStatus(file);
+	bool bEnable = g_FilterMgr.ToggleDocStatus(file);
 	EnableHighlight(bEnable);
 }
 
@@ -92,7 +92,8 @@ void ShowConfigDlg()
 			g_FilterMgr.LoadConfigFile();
 
 		wchar_t file[MAX_PATH];
-		GetCurrentDocumentFullPath(file);		
+		GetCurrentDocumentFullPath(file);
+		g_FilterMgr.SetDocStatus(file, true);
 		EnableHighlight(true);
 	}
 	else
@@ -100,21 +101,21 @@ void ShowConfigDlg()
 }
 
 void EnableHighlight(bool bEnable)
-{		
+{
 	CHighlightFilter *pItem = NULL;
-	int currpos = 0, startpos = 0, endpos = 0;	
+	int currpos = 0, startpos = 0, endpos = 0;
 	char *line = NULL;
 	int nMaxLineLength = 0;
-	int nLineIdx = 0;	
-	int nMarker = 0;	
+	int nLineIdx = 0;
+	int nMarker = 0;
 
 	// Get position range
 	currpos = static_cast<int>(SendMessage(g_curScintilla, SCI_GETCURRENTPOS, 0, 0));
 	startpos = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDSTARTPOSITION, currpos, (LPARAM)true));
-	endpos = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDENDPOSITION, currpos, (LPARAM)true));	
-	
+	endpos = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDENDPOSITION, currpos, (LPARAM)true));
+
 	// Update markers
-	for (int i = 0; i< g_FilterMgr.GetNumFilters(); i++)
+	for (int i = 0; i < g_FilterMgr.GetNumFilters(); i++)
 	{
 		pItem = g_FilterMgr.GetFilter(i);
 
@@ -124,15 +125,15 @@ void EnableHighlight(bool bEnable)
 			nMarker = 10 + i;
 			pItem->SetMarker(nMarker);
 			SendMessage(g_curScintilla, SCI_MARKERDELETEALL, nMarker, 0);   //first, remove all markers
-			SendMessage(g_curScintilla, SCI_MARKERDEFINE,  nMarker, SC_MARK_BACKGROUND);
-			SendMessage(g_curScintilla, SCI_MARKERSETBACK, nMarker, pItem->GetColor());			
+			SendMessage(g_curScintilla, SCI_MARKERDEFINE, nMarker, SC_MARK_BACKGROUND);
+			SendMessage(g_curScintilla, SCI_MARKERSETBACK, nMarker, pItem->GetColor());
 		}
 		else
 		{
 			nMarker = pItem->GetMarker();
-			SendMessage(g_curScintilla, SCI_MARKERDELETEALL, nMarker, 0);   //first, remove all markers			
-		}		
-	}	
+			SendMessage(g_curScintilla, SCI_MARKERDELETEALL, nMarker, 0);   //first, remove all markers
+		}
+	}
 
 	// Highlight the lines that match any of the filters
 	if (bEnable)
@@ -146,7 +147,7 @@ void EnableHighlight(bool bEnable)
 				break;
 			if (lineLength > nMaxLineLength)
 			{
-				if (line) delete [] line;
+				if (line) delete[] line;
 				nMaxLineLength = lineLength;
 				line = new char[nMaxLineLength];
 			}
@@ -166,15 +167,15 @@ void EnableHighlight(bool bEnable)
 			}
 
 			// Find and highlight text
-			for (int i = 0; i< g_FilterMgr.GetNumFilters(); i++)
+			for (int i = 0; i < g_FilterMgr.GetNumFilters(); i++)
 			{
 				pItem = g_FilterMgr.GetFilter(i);
 				if (!pItem->IsEmpty() && pItem->CheckLine(line))
 					SendMessage(g_curScintilla, SCI_MARKERADD, nLineIdx, pItem->GetMarker()); // line, marker number
-			}			
+			}
 			nLineIdx++;
 		}
-		if (line) delete [] line;
-	}	
+		if (line) delete[] line;
+	}
 	::SendMessage(g_curScintilla, SCI_SETSAVEPOINT, 0, 0);
 }

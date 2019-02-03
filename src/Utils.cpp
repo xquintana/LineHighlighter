@@ -22,11 +22,10 @@ void Trace(LPCTSTR fmt, ...)
 	vswprintf_s(buffer, 2048, fmt, args);
 	va_end(args);
 	OutputDebugString(buffer);
-#else	
+#else
 	UNREFERENCED_PARAMETER(fmt);
 #endif
 }
-
 
 const wchar_t *StringToWString(const string &sInput)
 {
@@ -49,4 +48,3 @@ BOOL DirectoryExists(const LPCTSTR szPath)
 	return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
 		(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
-

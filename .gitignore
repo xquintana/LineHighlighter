@@ -1,12 +1,8 @@
 *.sdf
 *.sln
 *.suo
+*.user
 bin/
-bin64/
-vs.proj/Debug
-vs.proj/Release
-vs.proj/x64
-vs.proj/LineHighlighter.opensdf
-vs.proj/LineHighlighter.exp
-vs.proj/LineHighlighter.lib
-vs.proj/LineHighlighter.vcxproj.user
+.vs/
+src/Debug
+src/Release
