@@ -1,22 +1,22 @@
 # Line Highlighter
 
-_Line Highlighter_ is a _Notepad++_ plugin that highlights lines with different background colors depending on line content.
+_Line Highlighter_ is a _Notepad++_ plugin that highlights lines using different background colors depending on the line content.
 
 ![Report](/screenshots/highlight.png)
 
-For example, it can be useful to read log files by standing out lines with specific keywords or data.
+For example, it can help read log files by standing out lines with specific keywords or values.
+
+This plugin is intended to simulate the highlight feature of [DebugView](https://docs.microsoft.com/en-us/sysinternals/downloads/debugview)
 
 ## Usage
 
 Under __Plugins__ > __Line Highlighter__ there are two commands:
 * __Toggle Highlight__. Enables or disables the highlighter for the current document.
-* __Highlight Filter__. Shows a dialog to configure the filters of the highlighter.
+* __Highlight Filter__. Shows a dialog to configure the filters of the highlighter. There are up to 10 filters available.  
 
 Each filter has two parameters:
-* The string or set of strings that a line must contain in order to be highlighted. Different strings must be separated with a semicolon (';')
-* The background color of the line.
-
-There are up to 10 filters available.  
+* A string that a line must contain in order to be highlighted. Filters are case-sensitive. Different strings can be specified by separating them with a semicolon (';')
+* The background color of the highlighter.
 
 It is recommended to map a shortcut to the __Toggle Highlight__ command.  
 
@@ -25,7 +25,6 @@ Please note:
 * If the document is modified, the highlighter does not update automatically: it must be reapplied.
 * The highlighter is disabled by default when _Notepad++_ is started.
 
-This plugin works like the highlight feature of [DebugView](https://docs.microsoft.com/en-us/sysinternals/downloads/debugview)
 
 ## Installation
 
@@ -47,4 +46,4 @@ This project is based on the [plugin template](https://github.com/npp-plugins/pl
 * Added a data structure in order to hold and manage the substrings used to highlight the lines (_CHighlightFilter/CFilterManager_)
 * Added a dialog to edit the highlight filters (_HighlightDlg_)
 * Added a command handler that shows this dialog (_ShowConfigDlg_)
-* Changed the location of the output files
+* Changed the location of the output files of the project.
