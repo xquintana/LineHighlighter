@@ -2,12 +2,12 @@
 
 #include "Utils.h"
 
-#define MAX_FILTERS 10 // Maximum number of simultaneous filters/colors available
+#define MAX_FILTERS 10 // Maximum number of simultaneous filters available
 
-///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 // class CHighlightFilter
-// A filter is a set of strings that a line must match in order to be highlighted
-// in a specific color.
+// A filter is a set of strings that a line must match in order to be highlighted in a specific color.
+// Strings are stored as UTF-8.
 //
 class CHighlightFilter
 {
@@ -16,18 +16,18 @@ public:
 	~CHighlightFilter();
 	virtual CHighlightFilter& operator=(const CHighlightFilter& src);
 
-	bool CheckLine(char *line); // Returns true if the line is to be highlighted
+	bool CheckLine(int nCodePage, char *sLine); // Returns true if the line is to be highlighted
 	bool IsEmpty(); // Returns true if the filter's string is empty
 
 	// Setters and Getters
-	void   SetText(string sText);
-	const wchar_t *GetText();
-	void   SetColor(unsigned long color);
-	unsigned long  GetColor() { return m_color; }
-	void   SetBrush(HBRUSH hBrush) { m_hBrush = hBrush; }
-	HBRUSH GetBrush() { return m_hBrush; }
-	void   SetMarker(int nMarker) { m_nMarker = nMarker; }
-	int    GetMarker() { return m_nMarker; }
+	void        SetText(string sText); // string is UTF-8
+	const char* GetText();
+	void		SetColor(unsigned long color);
+	ULONG       GetColor() { return m_color; }
+	void	    SetBrush(HBRUSH hBrush) { m_hBrush = hBrush; }
+	HBRUSH		GetBrush() { return m_hBrush; }
+	void		SetMarker(int nMarker) { m_nMarker = nMarker; }
+	int			GetMarker() { return m_nMarker; }
 
 	void Dump(); // For debug purposes
 
@@ -35,15 +35,15 @@ private:
 	void MakeParts(); // Splits the full string by semicolons
 
 private:
-	string m_sText; // Full string of the filter, as entered by the user
-	vector<string> m_parts; // Strings that will be matched for each input line
+	string m_sText; // Full string of the filter, as entered by the user, encoded in UTF-8 format
+	vector<string> m_parts; // Strings encoded in UTF-8 that will be matched to each input line
 	unsigned long  m_color; // Highlight color
 	HBRUSH m_hBrush; // Brush with the highlight color
 	int m_nMarker;	// Scintilla marker
 };
 
 
-///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 // class CFilterManager
 // Manages a list of highlight filters.
 //
@@ -69,5 +69,5 @@ private:
 private:
 	vector<CHighlightFilter> m_filters;	// List of highlight filters
 	vector<wstring> m_enabledDocs; // List of documents that are currently highlighted
-	wchar_t m_sConfigFile[MAX_PATH]; // Full path of the configuration file (config folder)
+	WCHAR m_wsConfigFile[MAX_PATH]; // Full path of the configuration file (config folder)
 };

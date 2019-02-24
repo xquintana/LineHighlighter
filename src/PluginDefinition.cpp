@@ -18,7 +18,7 @@ void GetMainHandler(); // Obtains the current handle of Scintilla
 void commandMenuInit(); // Initialization of the plugin commands
 void commandMenuCleanUp(); // Clean up plugin commands allocations
 bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey *sk, bool check0nInit); // Helper function to initialize the plugin commands
-void GetCurrentDocumentFullPath(wchar_t *file); // Returns the full path of the current document
+void GetCurrentDocumentFullPath(WCHAR *wsFile); // Returns the full path of the current document
 void OnToggleHighlight(); // Command handler that updates the highlight status
 void ShowConfigDlg(); // Command handler that shows the dialog to configure the filter strings and colors
 void EnableHighlight(bool bEnable); // Enables of disables the highlight of the current document
@@ -70,17 +70,17 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 	return true;
 }
 
-void GetCurrentDocumentFullPath(wchar_t *file)
+void GetCurrentDocumentFullPath(WCHAR *wsFile)
 {
-	SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)file);
+	SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)wsFile);
 }
 
 void OnToggleHighlight()
 {
-	wchar_t file[MAX_PATH];
-	GetCurrentDocumentFullPath(file);
+	WCHAR wsFile[MAX_PATH];
+	GetCurrentDocumentFullPath(wsFile);
 	// Toggle the status of the document (highlighted or not)
-	bool bEnable = g_FilterMgr.ToggleDocStatus(file);
+	bool bEnable = g_FilterMgr.ToggleDocStatus(wsFile);
 	EnableHighlight(bEnable);
 }
 
@@ -91,9 +91,9 @@ void ShowConfigDlg()
 		if (g_FilterMgr.SaveConfigFile())
 			g_FilterMgr.LoadConfigFile();
 
-		wchar_t file[MAX_PATH];
-		GetCurrentDocumentFullPath(file);
-		g_FilterMgr.SetDocStatus(file, true);
+		WCHAR wsFile[MAX_PATH];
+		GetCurrentDocumentFullPath(wsFile);
+		g_FilterMgr.SetDocStatus(wsFile, true);
 		EnableHighlight(true);
 	}
 	else
@@ -103,16 +103,19 @@ void ShowConfigDlg()
 void EnableHighlight(bool bEnable)
 {
 	CHighlightFilter *pItem = NULL;
-	int currpos = 0, startpos = 0, endpos = 0;
-	char *line = NULL;
+	int nCurPos = 0, nStartPos = 0, nEndPos = 0, nCodePage = 0;
+	char *sInputLine = NULL;
 	int nMaxLineLength = 0;
 	int nLineIdx = 0;
 	int nMarker = 0;
 
+	// Get code page
+	nCodePage = static_cast<int>(SendMessage(g_curScintilla, SCI_GETCODEPAGE, 0, 0));
+
 	// Get position range
-	currpos = static_cast<int>(SendMessage(g_curScintilla, SCI_GETCURRENTPOS, 0, 0));
-	startpos = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDSTARTPOSITION, currpos, (LPARAM)true));
-	endpos = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDENDPOSITION, currpos, (LPARAM)true));
+	nCurPos   = static_cast<int>(SendMessage(g_curScintilla, SCI_GETCURRENTPOS, 0, 0));
+	nStartPos = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDSTARTPOSITION, nCurPos, (LPARAM)true));
+	nEndPos   = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDENDPOSITION, nCurPos, (LPARAM)true));
 
 	// Update markers
 	for (int i = 0; i < g_FilterMgr.GetNumFilters(); i++)
@@ -142,27 +145,27 @@ void EnableHighlight(bool bEnable)
 		while (nLineIdx >= 0)
 		{
 			// Get next line
-			int lineLength = static_cast<int>(SendMessage(g_curScintilla, SCI_LINELENGTH, nLineIdx, 0));
-			if (lineLength <= 0)
+			int nLineLength = static_cast<int>(SendMessage(g_curScintilla, SCI_LINELENGTH, nLineIdx, 0));
+			if (nLineLength <= 0)
 				break;
-			if (lineLength > nMaxLineLength)
+			if (nLineLength > nMaxLineLength)
 			{
-				if (line) delete[] line;
-				nMaxLineLength = lineLength;
-				line = new char[nMaxLineLength];
+				if (sInputLine) delete[] sInputLine;
+				nMaxLineLength = nLineLength;
+				sInputLine = new char[nMaxLineLength];
 			}
 
-			ZeroMemory(line, sizeof(char)*nMaxLineLength);
-			SendMessage(g_curScintilla, SCI_GETLINE, nLineIdx, (LPARAM)line);
+			ZeroMemory(sInputLine, sizeof(char)*nMaxLineLength);
+			SendMessage(g_curScintilla, SCI_GETLINE, nLineIdx, (LPARAM)sInputLine);
 
-			if (line == NULL)
+			if (sInputLine == NULL)
 			{
 				Trace(L"Error: line is NULL");
 				break;
 			}
-			if (strlen(line) <= 0)
+			if (strlen(sInputLine) <= 0)
 			{
-				Trace(L"Error: invalid line length (%d)", strlen(line));
+				Trace(L"Error: invalid line length (%d)", strlen(sInputLine));
 				break;
 			}
 
@@ -170,12 +173,12 @@ void EnableHighlight(bool bEnable)
 			for (int i = 0; i < g_FilterMgr.GetNumFilters(); i++)
 			{
 				pItem = g_FilterMgr.GetFilter(i);
-				if (!pItem->IsEmpty() && pItem->CheckLine(line))
+				if (!pItem->IsEmpty() && pItem->CheckLine(nCodePage, sInputLine))
 					SendMessage(g_curScintilla, SCI_MARKERADD, nLineIdx, pItem->GetMarker()); // line, marker number
 			}
 			nLineIdx++;
 		}
-		if (line) delete[] line;
+		if (sInputLine) delete[] sInputLine;
 	}
 	::SendMessage(g_curScintilla, SCI_SETSAVEPOINT, 0, 0);
 }

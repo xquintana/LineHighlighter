@@ -47,7 +47,7 @@ BOOL CenterWindow(HWND hwndWindow)
 // Each entry of the combo is assigned a pointer to a highlight filter
 BOOL InitControls(HWND hWndDlg)
 {
-	wchar_t sIdx[MAX_PATH];
+	WCHAR wsIndex[MAX_PATH];
 	HWND hWndCombo = GetDlgItem(hWndDlg, IDC_COMBO_HIGHLIGHT_ID);
 	if (hWndCombo == NULL)
 		return FALSE;
@@ -56,8 +56,8 @@ BOOL InitControls(HWND hWndDlg)
 	{
 		CHighlightFilter *pFilter = g_FilterMgr.GetFilter(i);
 		if (i == 0) g_pSelectedFilter = pFilter;
-		swprintf(sIdx, MAX_PATH, L"%d", i + 1);
-		SendMessage(hWndCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(sIdx));
+		swprintf(wsIndex, MAX_PATH, L"%d", i + 1);
+		SendMessage(hWndCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(wsIndex));
 		SendMessage(hWndCombo, CB_SETITEMDATA, i, reinterpret_cast<LPARAM>(pFilter));
 
 	}
@@ -87,7 +87,7 @@ void UpdateControls(HWND hWndDlg, HWND hWndCombo)
 			g_pSelectedFilter = reinterpret_cast<CHighlightFilter*>(lResult);
 			::InvalidateRect(hEdit, NULL, FALSE);
 			// Update the text of the editbox with the item's text
-			SendMessage(hEdit, WM_SETTEXT, 0, (LPARAM)g_pSelectedFilter->GetText());
+			SendMessage(hEdit, WM_SETTEXT, 0, (LPARAM)UTF8toUTF16(g_pSelectedFilter->GetText()));
 			g_nLastSelection = index;
 		}
 	}
@@ -180,9 +180,9 @@ INT_PTR CALLBACK DlgConfigProc(HWND hWndDlg, UINT message, WPARAM wParam, LPARAM
 			if (g_pSelectedFilter)
 			{
 				// Read the textbox content
-				wchar_t sEditText[1024];
-				GetWindowText(hEdit, sEditText, 1024);
-				g_pSelectedFilter->SetText(WStringToString(sEditText));
+				WCHAR wsEditText[1024];
+				GetWindowText(hEdit, wsEditText, 1024);
+				g_pSelectedFilter->SetText(UTF16toUTF8(wsEditText));
 			}
 
 			if (GetFocus() == hEdit) // Get current control with focus

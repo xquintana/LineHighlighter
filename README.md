@@ -6,7 +6,7 @@ _Line Highlighter_ is a _Notepad++_ plugin that highlights lines using different
 
 For example, it can help read log files by standing out lines with specific keywords or values.
 
-This plugin is intended to simulate the highlight feature of [DebugView](https://docs.microsoft.com/en-us/sysinternals/downloads/debugview)
+This plugin is intended to simulate the highlighting feature of [DebugView](https://docs.microsoft.com/en-us/sysinternals/downloads/debugview)
 
 ## Usage
 

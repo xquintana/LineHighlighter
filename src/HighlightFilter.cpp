@@ -1,4 +1,5 @@
 #include "resource.h"
+#include "Scintilla.h"
 #include "HighlightFilter.h"
 #include <sstream>
 #include <fstream>
@@ -70,19 +71,34 @@ bool CHighlightFilter::IsEmpty()
 	return (m_parts.size() <= 0);
 }
 
-bool CHighlightFilter::CheckLine(char *line)
+bool CHighlightFilter::CheckLine(int nCodePage, char *sLine)
 {
+	if (sLine == NULL)
+		return false;
+
+	if (nCodePage != SC_CP_UTF8)
+	{
+		if (nCodePage == CP_ACP)
+		{
+			sLine = ANSItoUTF8(sLine);
+			if (sLine == NULL)
+				return false;
+		}
+		else
+			return false; // Encoding not supported
+	}
+
 	for (size_t i = 0; i < m_parts.size(); i++)
-		if (strstr(line, m_parts[i].c_str()))
+		if (strstr(sLine, m_parts[i].c_str()))
 			return true;
 	return false;
 }
 
 void CHighlightFilter::Dump()
 {
-	Trace(L"CHighlightItem::Dump-> text = '%s' - color = 0x%06x - %d parts", StringToWString(m_sText), m_color, m_parts.size());
+	Trace(L"CHighlightItem::Dump-> text = '%s' - color = 0x%06x - %d parts", m_sText.c_str(), m_color, m_parts.size());
 	for (size_t i = 0; i < m_parts.size(); i++)
-		Trace(L"CHighlightItem::Dump->    part %i = '%ws'", i, StringToWString(m_parts[i]));
+		Trace(L"CHighlightItem::Dump->    part %i = '%s'", i, m_parts[i].c_str());
 }
 
 void CHighlightFilter::SetText(string sText)
@@ -91,9 +107,9 @@ void CHighlightFilter::SetText(string sText)
 	MakeParts();
 }
 
-const wchar_t *CHighlightFilter::GetText()
+const char* CHighlightFilter::GetText()
 {
-	return StringToWString(m_sText);
+	return m_sText.c_str();
 }
 
 void CHighlightFilter::SetColor(unsigned long color)
@@ -105,24 +121,25 @@ void CHighlightFilter::SetColor(unsigned long color)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// CHighlightManager
+// CFilterManager
 
 CFilterManager::CFilterManager()
 {
+	m_wsConfigFile[0] = 0;
 	GetConfigFilePath();
 }
 
 bool CFilterManager::GetConfigFilePath()
 {
-	SHGetSpecialFolderPath(NULL, m_sConfigFile, CSIDL_APPDATA, FALSE); // %APPDATA%\plugins\Config
-	wcscat_s(m_sConfigFile, MAX_PATH, CONFIG_FOLDER);
+	SHGetSpecialFolderPath(NULL, m_wsConfigFile, CSIDL_APPDATA, FALSE); // %APPDATA%\plugins\Config
+	wcscat_s(m_wsConfigFile, MAX_PATH, CONFIG_FOLDER);
 
-	if (!DirectoryExists(m_sConfigFile))
+	if (!DirectoryExists(m_wsConfigFile))
 	{
-		ShowError(L"The configuration folder does not exist:\r\n%s", m_sConfigFile);
+		ShowError(L"The configuration folder does not exist:\r\n%s", m_wsConfigFile);
 		return false;
 	}
-	wcscat_s(m_sConfigFile, MAX_PATH, INI_FILE);
+	wcscat_s(m_wsConfigFile, MAX_PATH, INI_FILE);
 	return true;
 }
 
@@ -136,13 +153,13 @@ void CFilterManager::LoadDefault()
 bool CFilterManager::LoadConfigFile()
 {
 	m_filters.clear();
-	std::ifstream input(m_sConfigFile);
+	std::ifstream input(m_wsConfigFile);
 	if (input)
 	{
 		std::string line;
 		while (std::getline(input, line))
 		{
-			if (!line.compare("[LineHighlighter]"))
+			if (!line.compare("[Filter]"))
 			{
 				// Read text
 				std::getline(input, line);
@@ -158,7 +175,7 @@ bool CFilterManager::LoadConfigFile()
 			}
 			else
 			{
-				ShowError(L"Error reading config file:\r\n%s", m_sConfigFile);
+				ShowError(L"Error reading config file:\r\n%s", m_wsConfigFile);
 				LoadDefault();
 				return false;
 			}
@@ -175,16 +192,17 @@ bool CFilterManager::LoadConfigFile()
 bool CFilterManager::SaveConfigFile()
 {
 	char str[1024];
-	std::ofstream out(m_sConfigFile);
+	std::ofstream out(m_wsConfigFile);
 	if (out.is_open())
 	{
 		for (size_t i = 0; i < m_filters.size(); i++)
 		{
 			if (i >= MAX_FILTERS)
 				return true;
-			sprintf_s(str, 1024, "[LineHighlighter]\n%ws\n%d\n", m_filters[i].GetText(), m_filters[i].GetColor());
+			sprintf_s(str, 1024, "[Filter]\n%s\n%d\n", m_filters[i].GetText(), m_filters[i].GetColor());
 			out << str;
 		}
+		out.close();
 		return true;
 	}
 	return false;
