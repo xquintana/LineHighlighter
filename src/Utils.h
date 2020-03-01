@@ -1,7 +1,6 @@
 #pragma once
 
 #include <windows.h>
-using namespace std;
 #include <vector>
 
 // Displays a message box with an error
@@ -14,6 +13,6 @@ BOOL DirectoryExists(LPCTSTR szPath);
 void Trace(LPCTSTR fmt, ...);
 
 // String conversion functions
-char*  ANSItoUTF8(const char *ansi);
-char*  UTF16toUTF8(const WCHAR *utf16);
-WCHAR* UTF8toUTF16(const char *utf8);
+char*  ANSItoUTF8(const char* ansi);
+char*  UTF16toUTF8(const WCHAR* utf16);
+WCHAR* UTF8toUTF16(const char* utf8);

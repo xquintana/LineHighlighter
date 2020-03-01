@@ -26,9 +26,9 @@ unsigned long default_colors[MAX_FILTERS] = {
 
 
 //////////////////////////////////////////////////////////////////////////////
-// CHighlightFilter
+// HighlightFilter
 
-CHighlightFilter::CHighlightFilter(string sText, unsigned long color)
+HighlightFilter::HighlightFilter(std::string sText, unsigned long color)
 {
 	m_sText = sText;
 	m_color = color;
@@ -38,13 +38,13 @@ CHighlightFilter::CHighlightFilter(string sText, unsigned long color)
 	Dump();
 }
 
-CHighlightFilter::~CHighlightFilter()
+HighlightFilter::~HighlightFilter()
 {
 	if (m_hBrush)
 		DeleteObject(m_hBrush);
 }
 
-CHighlightFilter& CHighlightFilter::operator=(const CHighlightFilter& src)
+HighlightFilter& HighlightFilter::operator=(const HighlightFilter& src)
 {
 	m_sText = src.m_sText;
 	m_color = src.m_color;
@@ -54,10 +54,10 @@ CHighlightFilter& CHighlightFilter::operator=(const CHighlightFilter& src)
 	return *this;
 }
 
-void CHighlightFilter::MakeParts()
+void HighlightFilter::MakeParts()
 {
-	istringstream f(m_sText);
-	string str;
+	std::istringstream f(m_sText);
+	std::string str;
 	m_parts.clear();
 	while (std::getline(f, str, ';'))
 	{
@@ -66,12 +66,12 @@ void CHighlightFilter::MakeParts()
 	}
 }
 
-bool CHighlightFilter::IsEmpty()
+bool HighlightFilter::IsEmpty()
 {
 	return (m_parts.size() <= 0);
 }
 
-bool CHighlightFilter::CheckLine(int nCodePage, char *sLine)
+bool HighlightFilter::CheckLine(int nCodePage, char* sLine)
 {
 	if (sLine == NULL)
 		return false;
@@ -94,25 +94,25 @@ bool CHighlightFilter::CheckLine(int nCodePage, char *sLine)
 	return false;
 }
 
-void CHighlightFilter::Dump()
+void HighlightFilter::Dump()
 {
-	Trace(L"CHighlightItem::Dump-> text = '%s' - color = 0x%06x - %d parts", m_sText.c_str(), m_color, m_parts.size());
+	Trace(L"HighlightFilter::Dump-> text = '%s' - color = 0x%06x - %d parts", m_sText.c_str(), m_color, m_parts.size());
 	for (size_t i = 0; i < m_parts.size(); i++)
-		Trace(L"CHighlightItem::Dump->    part %i = '%s'", i, m_parts[i].c_str());
+		Trace(L"HighlightFilter::Dump->    part %i = '%s'", i, m_parts[i].c_str());
 }
 
-void CHighlightFilter::SetText(string sText)
+void HighlightFilter::SetText(std::string sText)
 {
 	m_sText = sText;
 	MakeParts();
 }
 
-const char* CHighlightFilter::GetText()
+const char* HighlightFilter::GetText()
 {
 	return m_sText.c_str();
 }
 
-void CHighlightFilter::SetColor(unsigned long color)
+void HighlightFilter::SetColor(unsigned long color)
 {
 	m_color = color;
 	if (m_hBrush)
@@ -121,17 +121,17 @@ void CHighlightFilter::SetColor(unsigned long color)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// CFilterManager
+// FilterManager
 
-CFilterManager::CFilterManager()
+FilterManager::FilterManager()
 {
 	m_wsConfigFile[0] = 0;
 	GetConfigFilePath();
 }
 
-bool CFilterManager::GetConfigFilePath()
+bool FilterManager::GetConfigFilePath()
 {
-	SHGetSpecialFolderPath(NULL, m_wsConfigFile, CSIDL_APPDATA, FALSE); // %APPDATA%\plugins\Config
+	SHGetSpecialFolderPath(NULL, m_wsConfigFile, CSIDL_APPDATA, FALSE); // %APPDATA%\plugins\config
 	wcscat_s(m_wsConfigFile, MAX_PATH, CONFIG_FOLDER);
 
 	if (!DirectoryExists(m_wsConfigFile))
@@ -143,14 +143,14 @@ bool CFilterManager::GetConfigFilePath()
 	return true;
 }
 
-void CFilterManager::LoadDefault()
+void FilterManager::LoadDefault()
 {
 	m_filters.clear();
 	while (m_filters.size() < MAX_FILTERS)
-		m_filters.push_back(CHighlightFilter("", default_colors[m_filters.size()]));
+		m_filters.push_back(HighlightFilter("", default_colors[m_filters.size()]));
 }
 
-bool CFilterManager::LoadConfigFile()
+bool FilterManager::LoadConfigFile()
 {
 	m_filters.clear();
 	std::ifstream input(m_wsConfigFile);
@@ -163,12 +163,12 @@ bool CFilterManager::LoadConfigFile()
 			{
 				// Read text
 				std::getline(input, line);
-				string text = line;
+				std::string text = line;
 				// Read color
 				std::getline(input, line);
-				string color = line;
+				std::string color = line;
 				// Add filter to the list
-				CHighlightFilter filter(text, strtol(color.c_str(), NULL, 10));
+				HighlightFilter filter(text, strtol(color.c_str(), NULL, 10));
 				m_filters.push_back(filter);
 				if (m_filters.size() >= MAX_FILTERS)
 					return true;
@@ -189,7 +189,7 @@ bool CFilterManager::LoadConfigFile()
 	return true;
 }
 
-bool CFilterManager::SaveConfigFile()
+bool FilterManager::SaveConfigFile()
 {
 	char str[1024];
 	std::ofstream out(m_wsConfigFile);
@@ -208,7 +208,7 @@ bool CFilterManager::SaveConfigFile()
 	return false;
 }
 
-void CFilterManager::SetFilter(int index, char* sText, unsigned long color)
+void FilterManager::SetFilter(int index, char* sText, unsigned long color)
 {
 	if ((size_t)index < m_filters.size())
 	{
@@ -217,15 +217,15 @@ void CFilterManager::SetFilter(int index, char* sText, unsigned long color)
 	}
 }
 
-void CFilterManager::Dump()
+void FilterManager::Dump()
 {
-	Trace(L"CFilterManager::Dump-> %d items", m_filters.size());
+	Trace(L"FilterManager::Dump-> %d items", m_filters.size());
 	for (size_t i = 0; i < m_filters.size(); i++)
 		m_filters[i].Dump();
-	Trace(L"CFilterManager::Dump-> exit");
+	Trace(L"FilterManager::Dump-> exit");
 }
 
-void CFilterManager::SetDocStatus(wstring sDoc, bool bEnable)
+void FilterManager::SetDocStatus(std::wstring sDoc, bool bEnable)
 {
 	auto element = std::find(m_enabledDocs.begin(), m_enabledDocs.end(), sDoc);
 	if (element == m_enabledDocs.end() && bEnable)
@@ -234,7 +234,7 @@ void CFilterManager::SetDocStatus(wstring sDoc, bool bEnable)
 		m_enabledDocs.erase(element);
 }
 
-bool CFilterManager::ToggleDocStatus(wstring sDoc)
+bool FilterManager::ToggleDocStatus(std::wstring sDoc)
 {
 	auto element = std::find(m_enabledDocs.begin(), m_enabledDocs.end(), sDoc);
 	if (element == m_enabledDocs.end())
@@ -245,4 +245,3 @@ bool CFilterManager::ToggleDocStatus(wstring sDoc)
 	m_enabledDocs.erase(element);
 	return false;
 }
-

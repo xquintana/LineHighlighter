@@ -9,7 +9,7 @@ extern HINSTANCE appInstance; // Application instance
 FuncItem funcItem[nbFunc];    // The plugin data that Notepad++ needs
 NppData nppData;              // Data of Notepad++
 HWND g_curScintilla = NULL;   // Handle to the current window of Scintilla
-CFilterManager g_FilterMgr;   // Manages the filters and colors of the highlighters
+FilterManager g_FilterMgr;   // Manages the filters and colors of the highlighters
 
 // Function prototypes
 void pluginInit(HANDLE); // Plugin data initialization
@@ -70,7 +70,7 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 	return true;
 }
 
-void GetCurrentDocumentFullPath(WCHAR *wsFile)
+void GetCurrentDocumentFullPath(WCHAR* wsFile)
 {
 	SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)wsFile);
 }
@@ -102,9 +102,9 @@ void ShowConfigDlg()
 
 void EnableHighlight(bool bEnable)
 {
-	CHighlightFilter *pItem = NULL;
+	HighlightFilter* pItem = NULL;
 	int nCurPos = 0, nStartPos = 0, nEndPos = 0, nCodePage = 0;
-	char *sInputLine = NULL;
+	char* sInputLine = NULL;
 	int nMaxLineLength = 0;
 	int nLineIdx = 0;
 	int nMarker = 0;
@@ -113,9 +113,9 @@ void EnableHighlight(bool bEnable)
 	nCodePage = static_cast<int>(SendMessage(g_curScintilla, SCI_GETCODEPAGE, 0, 0));
 
 	// Get position range
-	nCurPos   = static_cast<int>(SendMessage(g_curScintilla, SCI_GETCURRENTPOS, 0, 0));
+	nCurPos = static_cast<int>(SendMessage(g_curScintilla, SCI_GETCURRENTPOS, 0, 0));
 	nStartPos = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDSTARTPOSITION, nCurPos, (LPARAM)true));
-	nEndPos   = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDENDPOSITION, nCurPos, (LPARAM)true));
+	nEndPos = static_cast<int>(SendMessage(g_curScintilla, SCI_WORDENDPOSITION, nCurPos, (LPARAM)true));
 
 	// Update markers
 	for (int i = 0; i < g_FilterMgr.GetNumFilters(); i++)
